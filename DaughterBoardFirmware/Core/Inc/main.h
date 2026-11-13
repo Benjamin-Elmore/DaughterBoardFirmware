@@ -57,8 +57,12 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define GPIO_RECIEVE_ON_Pin GPIO_PIN_1
-#define GPIO_RECIEVE_ON_GPIO_Port GPIOA
+#define RS485__UART_ENABLE_Pin GPIO_PIN_1
+#define RS485__UART_ENABLE_GPIO_Port GPIOA
+#define RS485_UART_TX_Pin GPIO_PIN_2
+#define RS485_UART_TX_GPIO_Port GPIOA
+#define RS485_UART_RX_Pin GPIO_PIN_3
+#define RS485_UART_RX_GPIO_Port GPIOA
 #define I2C_DATA_Pin GPIO_PIN_6
 #define I2C_DATA_GPIO_Port GPIOA
 #define I2C_CLOCK_Pin GPIO_PIN_7
@@ -71,7 +75,7 @@ void Error_Handler(void);
 #define DEBUG_LED_2_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
-
+#define RX_BUFFER_SIZE 128U
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

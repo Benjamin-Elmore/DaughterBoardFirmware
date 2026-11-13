@@ -17,11 +17,14 @@
   */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
+#include <stdbool.h>
+#include <stdint.h>
 #include "main.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "mux.h"
+#include "Mux.h"
+#include "RS485Parser.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -42,7 +45,17 @@
 /* Private variables ---------------------------------------------------------*/
 I2C_HandleTypeDef hi2c2;
 
+UART_HandleTypeDef huart2;
+
 /* USER CODE BEGIN PV */
+RS485Parser parser;
+
+static uint8_t uartRxByte;
+static uint8_t rxBuffer[RX_BUFFER_SIZE];
+
+static volatile uint8_t rxWriteIndex;
+static volatile uint8_t rxReadIndex;
+static volatile uint32_t rxDroppedBytes;
 
 /* USER CODE END PV */
 
@@ -50,12 +63,43 @@ I2C_HandleTypeDef hi2c2;
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_I2C2_Init(void);
+static void MX_USART2_UART_Init(void);
 /* USER CODE BEGIN PFP */
+static void HandleRS485Packet(const RS485Packet *packet);
 
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+/* Integration point: add sensor command dispatch here. No sensor operations
+ * or replies are performed until the board's sensor mapping is defined. */
+static void HandleRS485Packet(const RS485Packet *packet)
+{
+
+  
+
+  switch (packet->command){
+    case RS485_READ:
+    
+    break;
+    case RS485_RESET_START:
+    
+    break;
+    case RS485_RESET_CONTINUE:
+    
+    break;
+    case RS485_RESET_END:
+    
+    break;
+    case RS485_REBOOT:
+        
+    break;
+    case RS485_FAILURE:
+
+    break;
+  }
+}
+
 
 
 /* USER CODE END 0 */
@@ -89,10 +133,25 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_I2C2_Init();
+  MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
+
+  initRS485Parser(&parser);
+
+  // MUX
   if (MuxInit(&hi2c2) != HAL_OK) {
     Error_Handler();
   }
+
+  // RS485 TRANSCIEVER
+  if (HAL_RS485Ex_Init(&huart2, UART_DE_POLARITY_HIGH, 0, 0) != HAL_OK) {
+    Error_Handler();
+  }
+
+  if (HAL_UART_Receive_IT(&huart2, &uartRxByte, 1) != HAL_OK) {
+    Error_Handler();
+  }
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -100,8 +159,28 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-
     /* USER CODE BEGIN 3 */
+    /* A dropped byte invalidates both the partial frame and queued bytes. */
+    static uint32_t handledDroppedBytes;
+    if (handledDroppedBytes != rxDroppedBytes) {
+      __disable_irq();
+      rxReadIndex = rxWriteIndex;
+      handledDroppedBytes = rxDroppedBytes;
+      __enable_irq();
+      resetRS485Parser(&parser);
+      parser.state = PARSER_DISCARD;
+    }
+
+    while (rxReadIndex != rxWriteIndex) {
+      uint8_t byte = rxBuffer[rxReadIndex];
+      rxReadIndex = (uint8_t)((rxReadIndex + 1U) % RX_BUFFER_SIZE);
+      timeoutRS485Parser(&parser, HAL_GetTick());
+      if (feedRS485Parser(&parser, byte)) {
+        HandleRS485Packet(&parser.packet);
+      }
+      parser.lastByteTime = HAL_GetTick();
+    }
+    timeoutRS485Parser(&parser, HAL_GetTick());
   }
   /* USER CODE END 3 */
 }
@@ -195,6 +274,54 @@ static void MX_I2C2_Init(void)
 }
 
 /**
+  * @brief USART2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_USART2_UART_Init(void)
+{
+
+  /* USER CODE BEGIN USART2_Init 0 */
+
+  /* USER CODE END USART2_Init 0 */
+
+  /* USER CODE BEGIN USART2_Init 1 */
+
+  /* USER CODE END USART2_Init 1 */
+  huart2.Instance = USART2;
+  huart2.Init.BaudRate = 115200;
+  huart2.Init.WordLength = UART_WORDLENGTH_8B;
+  huart2.Init.StopBits = UART_STOPBITS_1;
+  huart2.Init.Parity = UART_PARITY_NONE;
+  huart2.Init.Mode = UART_MODE_TX_RX;
+  huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart2.Init.OverSampling = UART_OVERSAMPLING_16;
+  huart2.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
+  huart2.Init.ClockPrescaler = UART_PRESCALER_DIV1;
+  huart2.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+  if (HAL_RS485Ex_Init(&huart2, UART_DE_POLARITY_HIGH, 0, 0) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_UARTEx_SetTxFifoThreshold(&huart2, UART_TXFIFO_THRESHOLD_1_8) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_UARTEx_SetRxFifoThreshold(&huart2, UART_RXFIFO_THRESHOLD_1_8) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_UARTEx_DisableFifoMode(&huart2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN USART2_Init 2 */
+
+  /* USER CODE END USART2_Init 2 */
+
+}
+
+/**
   * @brief GPIO Initialization Function
   * @param None
   * @retval None
@@ -211,20 +338,10 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIO_RECIEVE_ON_GPIO_Port, GPIO_RECIEVE_ON_Pin, GPIO_PIN_RESET);
-
-  /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(MUX_RESET_GPIO_Port, MUX_RESET_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, DEBUG_LED_1_Pin|DEBUG_LED_2_Pin, GPIO_PIN_RESET);
-
-  /*Configure GPIO pin : GPIO_RECIEVE_ON_Pin */
-  GPIO_InitStruct.Pin = GPIO_RECIEVE_ON_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIO_RECIEVE_ON_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : MUX_RESET_Pin DEBUG_LED_1_Pin DEBUG_LED_2_Pin */
   GPIO_InitStruct.Pin = MUX_RESET_Pin|DEBUG_LED_1_Pin|DEBUG_LED_2_Pin;
@@ -239,7 +356,24 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
+  if (huart->Instance != USART2) {
+    return;
+  }
 
+  uint16_t nextIndex = (uint16_t)((rxWriteIndex + 1U) % RX_BUFFER_SIZE);
+
+  if (nextIndex != rxReadIndex) {
+    rxBuffer[rxWriteIndex] = uartRxByte;
+    rxWriteIndex = nextIndex;
+  } else {
+    rxDroppedBytes++;
+  }
+
+  if (HAL_UART_Receive_IT(&huart2, &uartRxByte, 1) != HAL_OK) {
+    Error_Handler();
+  }
+}
 /* USER CODE END 4 */
 
 /**

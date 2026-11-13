@@ -22,7 +22,7 @@ static inline HAL_StatusTypeDef MuxWriteMask(I2C_HandleTypeDef* i2cHandle, uint8
 
 static inline HAL_StatusTypeDef MuxSelectChannel(I2C_HandleTypeDef* i2cHandle, uint8_t channel) {
   // Set the channel of the mux
-  if (channel > 7U) {
+  if (channel > 3U) {
     return HAL_ERROR;
   }
 
