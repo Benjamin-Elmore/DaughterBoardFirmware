@@ -1,0 +1,22 @@
+{
+    "configurations": [
+        {
+            "name": "STM32G0B1 Debug",
+            "compilerPath": "${env:LOCALAPPDATA}/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/arm-none-eabi-gcc.exe",
+            "compilerArgs": ["-mcpu=cortex-m0plus", "-mthumb"],
+            "compileCommands": "${workspaceFolder}/DaughterBoardFirmware/build/Debug/compile_commands.json",
+            "intelliSenseMode": "windows-gcc-arm",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "defines": ["USE_HAL_DRIVER", "STM32G0B1xx", "DEBUG"],
+            "includePath": [
+                "${workspaceFolder}/DaughterBoardFirmware/Core/Inc",
+                "${workspaceFolder}/DaughterBoardFirmware/Drivers/STM32G0xx_HAL_Driver/Inc",
+                "${workspaceFolder}/DaughterBoardFirmware/Drivers/STM32G0xx_HAL_Driver/Inc/Legacy",
+                "${workspaceFolder}/DaughterBoardFirmware/Drivers/CMSIS/Device/ST/STM32G0xx/Include",
+                "${workspaceFolder}/DaughterBoardFirmware/Drivers/CMSIS/Include"
+            ]
+        }
+    ],
+    "version": 4
+}
