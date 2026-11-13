@@ -1,5 +1,5 @@
 {
-    "cmake.sourceDirectory": "${workspaceFolder}/DaughterBoardFirmware",
+    "cmake.sourceDirectory": "${workspaceFolder}",
     "C_Cpp.intelliSenseEngine": "default",
     "stm32cube-ide-clangd.enable": false
 }

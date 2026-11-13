@@ -15,7 +15,7 @@ try {
         $env:PATH = (Join-Path $bundle.FullName 'bin') + ';' + $env:PATH
     }
 
-    Push-Location (Join-Path $PSScriptRoot 'DaughterBoardFirmware')
+    Push-Location $PSScriptRoot
     try {
         & cmake --preset $Configuration
         if ($LASTEXITCODE -ne 0) { throw 'CMake configuration failed.' }
