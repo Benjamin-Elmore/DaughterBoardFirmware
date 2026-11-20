@@ -13,8 +13,7 @@
 
 typedef enum {
     RS485_FAILURE = 0x00, RS485_READ = 0x20,
-    RS485_RESET_START = 0x3F, RS485_RESET_CONTINUE = 0x3E,
-    RS485_RESET_END = 0x2A, RS485_REBOOT = 0x15
+    RS485_RESET = 0x3F, RS485_REBOOT = 0x15
 } RS485Command;
 
 typedef enum {

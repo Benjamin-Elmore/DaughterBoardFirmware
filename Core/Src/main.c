@@ -18,13 +18,16 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
 #include "main.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "Mux.h"
+#include "I2C.h"
 #include "RS485Parser.h"
+#include "PacketHandler.h"
+#include "SensorObj.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -65,41 +68,11 @@ static void MX_GPIO_Init(void);
 static void MX_I2C2_Init(void);
 static void MX_USART2_UART_Init(void);
 /* USER CODE BEGIN PFP */
-static void HandleRS485Packet(const RS485Packet *packet);
 
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-/* Integration point: add sensor command dispatch here. No sensor operations
- * or replies are performed until the board's sensor mapping is defined. */
-static void HandleRS485Packet(const RS485Packet *packet)
-{
-
-  
-
-  switch (packet->command){
-    case RS485_READ:
-    
-    break;
-    case RS485_RESET_START:
-    
-    break;
-    case RS485_RESET_CONTINUE:
-    
-    break;
-    case RS485_RESET_END:
-    
-    break;
-    case RS485_REBOOT:
-        
-    break;
-    case RS485_FAILURE:
-
-    break;
-  }
-}
-
 
 
 /* USER CODE END 0 */
@@ -152,6 +125,15 @@ int main(void)
     Error_Handler();
   }
 
+  SensorObj sensors[MAX_SENSOR_CT] = {0};
+  SensorObj *sensorArr[MAX_SENSOR_CT];
+  for (size_t i = 0; i < MAX_SENSOR_CT; i++) {
+    sensorArr[i] = &sensors[i];
+    // Set unused sensors to nonetype if they are not defined
+    // this is used by the reader function getSensorReading()
+    sensorArr[i]->type = SENSOR_NONETYPE;
+  }
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -162,7 +144,9 @@ int main(void)
     /* USER CODE BEGIN 3 */
     /* A dropped byte invalidates both the partial frame and queued bytes. */
     static uint32_t handledDroppedBytes;
+
     if (handledDroppedBytes != rxDroppedBytes) {
+
       __disable_irq();
       rxReadIndex = rxWriteIndex;
       handledDroppedBytes = rxDroppedBytes;
@@ -172,11 +156,14 @@ int main(void)
     }
 
     while (rxReadIndex != rxWriteIndex) {
+      // While the read packet is not caught up with the current write location
+
       uint8_t byte = rxBuffer[rxReadIndex];
       rxReadIndex = (uint8_t)((rxReadIndex + 1U) % RX_BUFFER_SIZE);
       timeoutRS485Parser(&parser, HAL_GetTick());
       if (feedRS485Parser(&parser, byte)) {
-        HandleRS485Packet(&parser.packet);
+        // The RS485 reply path will use the command status.
+        (void)handleRS485Packet(&parser.packet, sensorArr);
       }
       parser.lastByteTime = HAL_GetTick();
     }

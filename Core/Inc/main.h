@@ -76,6 +76,8 @@ void Error_Handler(void);
 
 /* USER CODE BEGIN Private defines */
 #define RX_BUFFER_SIZE 128U
+
+#define MAX_SENSOR_CT 4
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

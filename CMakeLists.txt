@@ -35,7 +35,13 @@ enable_language(C ASM)
 add_executable(${CMAKE_PROJECT_NAME})
 
 # Add STM32CubeMX generated sources
-add_subdirectory(cmake/stm32cubemx)
+add_subdirectory(stm32/cmake/stm32cubemx)
+
+# Use the application entry point outside the CubeMX project. CubeMX can
+# regenerate its own main.c and main.h under stm32/ for reference.
+get_target_property(firmware_sources ${CMAKE_PROJECT_NAME} SOURCES)
+list(FILTER firmware_sources EXCLUDE REGEX "/main[.]c$")
+set_property(TARGET ${CMAKE_PROJECT_NAME} PROPERTY SOURCES "${firmware_sources}")
 
 # Link directories setup
 target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
@@ -44,12 +50,15 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 
 # Add sources to executable
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
+    Core/Src/main.c
+    Core/Src/PacketHandler.c
     Core/Src/RS485Parser.c
     # Add user sources here
 )
 
 # Add include paths
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
+    Core/Inc
     # Add user defined include paths
 )
 

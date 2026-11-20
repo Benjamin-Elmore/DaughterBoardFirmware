@@ -11,10 +11,11 @@
             "defines": ["USE_HAL_DRIVER", "STM32G0B1xx", "DEBUG"],
             "includePath": [
                 "${workspaceFolder}/Core/Inc",
-                "${workspaceFolder}/Drivers/STM32G0xx_HAL_Driver/Inc",
-                "${workspaceFolder}/Drivers/STM32G0xx_HAL_Driver/Inc/Legacy",
-                "${workspaceFolder}/Drivers/CMSIS/Device/ST/STM32G0xx/Include",
-                "${workspaceFolder}/Drivers/CMSIS/Include"
+                "${workspaceFolder}/stm32/Core/Inc",
+                "${workspaceFolder}/stm32/Drivers/STM32G0xx_HAL_Driver/Inc",
+                "${workspaceFolder}/stm32/Drivers/STM32G0xx_HAL_Driver/Inc/Legacy",
+                "${workspaceFolder}/stm32/Drivers/CMSIS/Device/ST/STM32G0xx/Include",
+                "${workspaceFolder}/stm32/Drivers/CMSIS/Include"
             ]
         }
     ],

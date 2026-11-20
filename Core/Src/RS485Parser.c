@@ -14,8 +14,10 @@ static bool validHeader(uint8_t byte)
 {
     /* Match ARC: command is the upper six bits; low bits are preserved. */
     switch (byte >> 2) {
-    case RS485_FAILURE: case RS485_READ: case RS485_RESET_START:
-    case RS485_RESET_CONTINUE: case RS485_RESET_END: case RS485_REBOOT:
+    case RS485_FAILURE:
+    case RS485_READ:
+    case RS485_RESET:
+    case RS485_REBOOT:
         return true;
     default:
         return false;
@@ -48,15 +50,21 @@ static void decodePacket(RS485Parser *parser)
     RS485Packet *packet = &parser->packet;
     const uint8_t *bytes = parser->rxBuffer;
     memset(packet, 0, sizeof(*packet));
+
     packet->header = bytes[0];
     packet->command = (RS485Command)(bytes[0] >> 2);
+
     packet->bodyLength = parser->bodyLength;
+
     packet->timeSinceLastReceive = readU32(bytes + 3);
     packet->timeSent = readU32(bytes + 7);
+
+    // Set the sensor ID's that we need
     for (uint8_t i = 0; i < 8; ++i) {
         packet->sensorIDs[2U * i] = bytes[11U + i] >> 4;
         packet->sensorIDs[2U * i + 1U] = bytes[11U + i] & 0x0FU;
     }
+
     packet->sensorDataLength = parser->bodyLength - RS485_BODY_MIN;
     memcpy(packet->sensorData, bytes + 19, packet->sensorDataLength);
 }

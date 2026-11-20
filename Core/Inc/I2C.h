@@ -4,6 +4,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "stm32g0xx_hal.h"
 #include "main.h"
+#include "SensorObj.h"
 
 #define MUX_ADDR_7BIT 0x70U
 #define MUX_TIMEOUT_MS 100U
@@ -50,6 +51,12 @@ static inline HAL_StatusTypeDef MuxInit(I2C_HandleTypeDef* i2cHandle) {
     }
 
     return MuxWriteMask(i2cHandle, 0);
+}
+
+static inline HAL_StatusTypeDef getSensorReading(SensorObj *sensor) {
+  // Sensor-specific I2C transactions are pending.
+  (void)sensor;
+  return HAL_ERROR;
 }
 
 #endif /* MUX_H */
